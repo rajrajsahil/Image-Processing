@@ -17,10 +17,32 @@ Preprocessor directives change the text of the source code and the result is a n
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <cstdlib>
+#include <opencv2/viz.hpp>
 using namespace std;
 using namespace cv;
 
-const float calibration_square_dimention =.0245f;//meters//scp test.cpp pi@ip0f pi:~/home/place
+/*int main()
+{
+	Mat left = imread("left.ppm",1);
+	Mat right = imread("right.ppm",1);
+	int i;
+	for(i=0;i<left.cols;i++)
+	{
+		left.at<Vec3b>(200,i)[2]=255;
+		left.at<Vec3b>(200,i)[1]=0;
+		left.at<Vec3b>(200,i)[0]=0;
+		right.at<Vec3b>(200,i)[2]=255;
+		right.at<Vec3b>(200,i)[1]=0;
+		right.at<Vec3b>(200,i)[0]=0;
+	}
+	imshow("letf",left);
+	imshow("right",right);
+	waitKey(0);
+	return 0;
+}*/
+
+/*const float calibration_square_dimention =.0245f;//meters//scp test.cpp pi@ip0f pi:~/home/place
 const Size chessboard_dimentions =Size(9,6);
 cv::Mat camera_matrix1;
 cv::Mat camera_matrix2;
@@ -71,16 +93,18 @@ int  creat_known_position(Size board_size, float square_edge_length)
 	world_corners.push_back(object_corners);
 	return 0;
 }
-int number_of_image_taken=12;
+int number_of_image_taken=5;
 
 int main()
 {
 	int i=0;
+	vector<Point2f> corners1;
+	vector<Point2f> corners2;
 	int useful_image = 0;
 	int permition;
 	cv::Size image_size;
 	char * filename = new char[50];
-	ofstream file("Camera_property");
+	ofstream file("test.txt");//out and trunk mode;
 	for(i=0;i<number_of_image_taken;i++)
 	{
 		sprintf(filename,"stereo_images/get_image_%d.ppm",i);
@@ -88,10 +112,10 @@ int main()
 		//imshow("stereo",stereo);
 		Mat left(stereo.rows,stereo.cols/2,CV_8UC3,Scalar(0,0,0));
 		image_size=left.size();
-		cout<<"cols:"<<stereo.cols/2<<"rows:"<<stereo.rows<<endl;
-		cout<<"cols:"<<left.cols<<"rows:"<<left.rows<<endl;
+		// cout<<"cols:"<<stereo.cols/2<<"rows:"<<stereo.rows<<endl;
+		// cout<<"cols:"<<left.cols<<"rows:"<<left.rows<<endl;
 		stereo(Rect(0,0,stereo.cols/2,stereo.rows)).copyTo(left);
-		cout<<"hello0"<<endl;
+		//cout<<"hello0"<<endl;
 		Mat right(stereo.rows,stereo.cols/2,CV_8UC3,Scalar(0,0,0));
 		stereo(Rect(stereo.cols/2,0,stereo.cols/2,stereo.rows)).copyTo(right);
 		sprintf(filename,"left/left_%d.ppm",i);
@@ -105,9 +129,12 @@ int main()
 		if(found_right&&found_left)
 		{
 			image_corners_left.push_back(corners_left);
+			
 			image_corners_right.push_back(corners_right);
+
 			creat_known_position(chessboard_dimentions,calibration_square_dimention);
 			useful_image++;
+			cout<<useful_image<<endl;
 		}
 	}
 		
@@ -116,13 +143,13 @@ int main()
 	cv::calibrateCamera(world_corners,image_corners_left,image_size,camera_matrix1,distCoeffs1,rvecs1,tvecs1);
 	cv::calibrateCamera(world_corners,image_corners_right,image_size,camera_matrix2,distCoeffs2,rvecs2,tvecs2);
 	cout<<"camera_matrix1:"<<camera_matrix1.size()<<endl;
-	cout<<camera_matrix1.at<double>(k,l)<<endl;
+	cout<<camera_matrix1<<endl;
 	
 	cout<<"camera_matrix2:"<<camera_matrix2.size()<<endl;
-	cout<<"["<<k<<","<<l<<"]"<<camera_matrix2.at<double>(k,l)<<endl;
+	cout<<camera_matrix2<<endl;
 	
 	cout<<"calibration started"<<endl;
-	cv::stereoCalibrate(world_corners,image_corners_left,image_corners_right,camera_matrix1,distCoeffs1,camera_matrix2,distCoeffs2,image_size,rotation,translation,essential,fundamental);
+	cv::stereoCalibrate(world_corners,image_corners_left,image_corners_right,camera_matrix1,distCoeffs1,camera_matrix2,distCoeffs2,image_size,rotation,translation,essential,fundamental,TermCriteria(TermCriteria::COUNT+TermCriteria::EPS, 30, 1e-6),CV_CALIB_USE_INTRINSIC_GUESS);
 	cout<<"calibration done"<<endl;
 	file<<"CALIBRATION DATA"<<endl;
 	file<<"camera_matrix1(left camera):"<<camera_matrix1.size()<<endl;
@@ -137,6 +164,11 @@ int main()
 	file<<rotation<<endl;
 	file<<"Translation matrix:"<<translation.size()<<endl;
 	file<<translation<<endl;
+	file<<"essential:"<<essential.size()<<endl;
+	file<<"determinant(essential):"<<determinant(essential)<<endl;
+	file<<essential<<endl;	
+	file<<"fundamental:"<<fundamental.size()<<endl;
+	file<<fundamental<<endl;	
 	// for(k=0;k<rotation.size();k++)
 	// {
 	// 	file<<"["<<k<<"]"<<rotation[k]<<endl;
@@ -145,7 +177,7 @@ int main()
 				
 	
 	cout<<"rectification started"<<endl;
-	cv::stereoRectify(camera_matrix1,distCoeffs1,camera_matrix2,distCoeffs2,image_size,rotation,translation,rectificaton1,rectificaton2,projection1,projection2,reprojection,cv::CALIB_ZERO_DISPARITY);
+	cv::stereoRectify(camera_matrix1,distCoeffs1,camera_matrix2,distCoeffs2,image_size,rotation,translation,rectificaton1,rectificaton2,projection1,projection2,reprojection,cv::CALIB_ZERO_DISPARITY,0);
 	cout<<"Rectification Done"<<endl;
 	file<<"RECTIFICATION DATA"<<endl;
 	file<<"rectificaton1:"<<rectificaton1.size()<<endl;
@@ -162,26 +194,38 @@ int main()
 	cv::Mat map1_2;
 	cv::Mat map2_1;
 	cv::Mat map2_2;
-	cout<<"hello"<<endl;
-	bool boolian = stereoRectifyUncalibrated(image_corners_left,image_corners_right,fundamental,image_size,H1,H2);
-	cout<<"hello"<<endl;
-	cv:: Mat R1;
-	cv:: Mat R2;
-	R1 = camera_matrix1.inv()*H1*camera_matrix1;
-	R1 = camera_matrix2.inv()*H2*camera_matrix2;
-	cv::initUndistortRectifyMap(camera_matrix1,distCoeffs1,R1,projection1,image_size,CV_32FC1,map1_1,map1_2);
-	cv::initUndistortRectifyMap(camera_matrix2,distCoeffs2,R2,projection2,image_size,CV_32FC1,map2_1,map2_2);
+	// cout<<"hello"<<endl;
+	// stereoRectifyUncalibrated(corners1,corners2,fundamental,image_size,H1,H2);
+	// cout<<"hello"<<endl;
+	// cv:: Mat R1;
+	// cv:: Mat R2;
+	// R1 = camera_matrix1.inv()*H1*camera_matrix1;
+	// R1 = camera_matrix2.inv()*H2*camera_matrix2;
+	cv::initUndistortRectifyMap(camera_matrix1,distCoeffs1,rectificaton1,projection1,image_size,CV_16SC2,map1_1,map1_2);
+	cv::initUndistortRectifyMap(camera_matrix2,distCoeffs2,rectificaton2,projection2,image_size,CV_16SC2,map2_1,map2_2);
 	cout<<"map1_1:"<<map1_1.size()<<endl;
+	cout<<"map1_1 type"<<map1_1.type()<<endl;
+	cout<<"map1_1 type"<<map1_2.type()<<endl;
+	// imwrite("map1_1.jpg",map1_1);
+	// imwrite("map1_2.jpg",map1_2);
+	// imwrite("map2_1.jpg",map2_1);
+	// imwrite("map2_2.jpg",map2_2);
+	// cout<<"map1_1:"<<map1_1.at<Vec2s>(0,0)<<endl;
 	file<<map1_1<<endl;
-	Mat image_left =imread("left/left_0.ppm",1);
+	file<<map1_2<<endl;
+	file<<map2_1<<endl;
+	file<<map2_2<<endl;
+	Mat image_left =imread("left/left_38.ppm",1);
 
 	file<<"Image left size"<<image_left.size()<<endl;
 	Mat dst1;//(map1_1.cols,map1_1.rows,CV_8UC3,Scalar(0));
 	remap(image_left,dst1,map1_1,map1_2,CV_INTER_LINEAR,BORDER_CONSTANT);
+	imwrite("left.ppm",dst1);
 	//cv::undistort(image_left,dst1,camera_matrix1,distCoeffs1,noArray());
-	Mat image_right=imread("right/right_0.ppm",1);
+	Mat image_right=imread("right/right_38.ppm",1);
 	Mat dst2;//(map2_1.cols,map2_1.rows,CV_8UC3,Scalar(0));
 	remap(image_right, dst2, map2_1, map2_2, CV_INTER_LINEAR,BORDER_CONSTANT);
+	imwrite("right.ppm",dst2);
 	//cv::undistort(image_right,dst2,camera_matrix2,distCoeffs2,noArray());
 	// imshow("left1",image_left);
 	// imshow("right1",image_right);
@@ -192,7 +236,8 @@ int main()
 	//file<<dst2<<endl;
 	waitKey(0);
 	return 0;
-}
+}*/
+
 /*
 //CAMERA CALIBRATION AND RECTIFICATION USING IMAGE;
 int  creat_known_position(Size board_size, float square_edge_length)
@@ -388,65 +433,384 @@ int main()//22-05-2017
 }*/
 /*int main()
 {
-	Mat img1, img2, g1, g2;
-	Mat disp, disp8;
+	Mat map1_x;
+	Mat map1_2;
+	Mat map2_1;
+	Mat map2_2;
+	int count=0;
+	ifstream myfiles;
+	myfiles.open("map1_1");
+	if(!myfiles.is_open())
+	{
+		cout<<"file is not open"<<endl;
+	}
+	while(myfiles.eof())
+	{
+		count++;
+	}
+	cout<<"cunt"<<count<<endl;
+	return 0;
+}*/
 
-	//char* method = argv[3];
-	//char* method = "SGBM";
+/*int main()
+{	
 
-	//img1 = imread(argv[1]);
-	//img2 = imread(argv[2]);
-	img1 = imread("left1.png");
-	img2 = imread("right1.png");
+	Mat stereo = imread("inside4.ppm");
+	cout<<"hello"<<endl;
+	Mat img1(stereo.rows,stereo.cols/2,CV_8UC3,Scalar(0,0,0));
+	stereo(Rect(0,0,stereo.cols/2,stereo.rows)).copyTo(img1);
+	Mat img2(stereo.rows,stereo.cols/2,CV_8UC3,Scalar(0,0,0));
+	stereo(Rect(stereo.cols/2,0,stereo.cols/2,stereo.rows)).copyTo(img2);
 
-	cvtColor(img1, g1, CV_BGR2GRAY);
-	cvtColor(img2, g2, CV_BGR2GRAY);
 
-	// if (!(strcmp(method, "BM")))
-	// {
-	//     StereoBM sbm;
-	//     sbm.state->SADWindowSize = 9;
-	//     sbm.state->numberOfDisparities = 112;
-	//     sbm.state->preFilterSize = 5;
-	//     sbm.state->preFilterCap = 61;
-	//     sbm.state->minDisparity = -39;
-	//     sbm.state->textureThreshold = 507;
-	//     sbm.state->uniquenessRatio = 0;
-	//     sbm.state->speckleWindowSize = 0;
-	//     sbm.state->speckleRange = 8;
-	//     sbm.state->disp12MaxDiff = 1;
-	//     sbm(g1, g2, disp);
-	// }
-	// else if (!(strcmp(method, "SGBM")))
-	// {
-	    StereoSGBM sbm;
-	    sbm.SADWindowSize = 5;
-	    sbm.numberOfDisparities = 192;
-	    sbm.preFilterCap = 4;
-	    sbm.minDisparity = -64;
-	    sbm.uniquenessRatio = 1;
-	    sbm.speckleWindowSize = 150;
-	    sbm.speckleRange = 2;
-	    sbm.disp12MaxDiff = 10;
-	    sbm.fullDP = false;
-	    sbm.P1 = 600;
-	    sbm.P2 = 2400;
-	    sbm(img1,img2, disp);
-	//}
+	char val;
+	int val1;
+	Mat map1_x(img1.rows,img1.cols,CV_16SC2,Scalar(0));
+	Mat map2_x(img1.rows,img1.cols,CV_16SC2,Scalar(0));
+	Mat map1_y(img1.rows,img1.cols,CV_16UC1,Scalar(0));
+	Mat map2_y(img1.rows,img1.cols,CV_16UC1,Scalar(0));
+	ifstream file;
+	ofstream save;
+	file.close();
+	save.close();
+
+	file.open("new_map1_1");
+	if(file.good())
+	{
+		for(int i=0;i<1080;i++)
+		{	
+			
+			if(i==0)
+				{
+					file>>val;
+				}
+			for(int j=0;j<960;j++)
+			{	
+				file>>val1;
+				map1_x.at<Vec2s>(i,j)[0]=val1;
+				file>>val;
+
+				file>>val1;
+				map1_x.at<Vec2s>(i,j)[1]=val1;
+				file>>val;
+			}
+
+		}
+	}
+	else
+	{
+		cout<<"prob"<<endl;
+	}
+	save.open("map1_x");
+	save<<map1_x<<endl;
+	file.close();
+	save.close();
+cout<<"hello"<<endl;
+
+	file.open("new_map2_1");
+	if(file.good())
+	{
+		for(int k=0;k<1080;k++)
+		{	
+			
+			if(k==0)
+				{
+					file>>val;
+				}
+			for(int l=0;l<960;l++)
+			{	
+				file>>val1;
+				map2_x.at<Vec2s>(k,l)[0]=val1;
+				file>>val;
+
+				file>>val1;
+				map2_x.at<Vec2s>(k,l)[1]=val1;
+				file>>val;
+			}
+
+		}
+	}
+	else
+	{
+		cout<<"prob"<<endl;
+	}
+	save.open("map2_x");
+	save<<map2_x<<endl;
+	file.close();
+	save.close();
+
+cout<<"hello"<<endl;
+	file.open("new_map1_2");
+	if(file.good())
+	{
+		for(int k=0;k<1080;k++)
+		{	
+			
+			if(k==0)
+				{
+					file>>val;
+				}
+			for(int l=0;l<960;l++)
+			{	
+				file>>val1;
+				map1_y.at<unsigned short>(k,l)=val1;
+				file>>val;
+			}
+
+		}
+	}
+	else
+	{
+		cout<<"prob"<<endl;
+	}
+	save.open("map1_y");
+	save<<map1_y<<endl;
+	file.close();
+	save.close();
+
+	
+	file.open("new_map2_2");
+	if(file.good())
+	{
+		for(int k=0;k<1080;k++)
+		{	
+			
+			if(k==0)
+				{
+					file>>val;
+				}
+			for(int l=0;l<960;l++)
+			{	
+				file>>val1;
+				map2_y.at<unsigned short>(k,l)=val1;
+				file>>val;
+			}
+
+		}
+	}
+	else
+	{
+		cout<<"prob"<<endl;
+	}
+	save.open("map2_y");
+	save<<map2_y<<endl;
+	file.close();
+	save.close();
+
+cout<<"done"<<endl;
+	Mat img11;
+	Mat img22;
+	cout<<"done"<<endl;
+	cout<<"mapx:"<<map1_x.size()<<endl;
+	cout<<"mapy:"<<map1_y.size()<<endl;
+	remap(img1, img11, map1_x, map1_y, CV_INTER_LINEAR,BORDER_CONSTANT);
+	imshow("left",img1);
+	imshow("left_rectify",img11);
+	imwrite("left.ppm",img11);
+	remap(img2, img22, map2_x, map2_y, CV_INTER_LINEAR,BORDER_CONSTANT);
+	imshow("right",img1);
+	imshow("right_rectify",img22);
+	imwrite("right.ppm",img22);
+	waitKey(0);
+	// imwrite("left",img11);
+	// imwrite("right",img22);
+	// imshow("left",img11);
+	// imshow("right",img22);
+
+	return 0;
+}*/
+/////SGBM
+
+
+Mat g1, g2;
+Mat points;
+Mat reprojection(4,4,CV_64F);
+Mat disp, disp8;
+Mat image_left=imread("left.ppm",1);
+Mat image_right=imread("right.ppm",1);
+Mat img1=imread("left.ppm",0);
+Mat img2=imread("right.ppm",0);
+// Mat img1;
+// Mat img2;
+Mat img11;
+Mat img22;
+Mat img111;
+Mat img222;
+Mat img1111;
+Mat img2222;
+Mat disparity;
+int SADWindowSize1=5;
+int numberOfDisparities1=173;
+int preFilterCap1=11;
+int minDisparity1 =0;
+int textureThreshold1=3;
+int uniquenessRatio1=3;
+int speckleWindowSize1=0;
+int speckleRange1=5;
+int disp12MaxDiff1=228;
+int p11 =554;
+int p21 =3408;
+void therosole(int , void*)
+{
+// if (!(strcmp(method, "BM")))
+// {
+	//destroyWindow("disp8");
+	// namedWindow("disp8",WINDOW_NORMAL);
+ //    StereoBM sbm;
+ //    while((SADWindowSize1)%2==0)
+ //    {
+ //    	SADWindowSize1 = SADWindowSize1-1;
+ //    }
+ //    sbm.state->SADWindowSize = SADWindowSize1;
+ //    while(numberOfDisparities1%16!=0)
+ //    {
+ //    	numberOfDisparities1=numberOfDisparities1+1;
+ //    }
+ //    sbm.state->numberOfDisparities = numberOfDisparities1;
+ //    //sbm.state->preFilterSize = preFilterSize1;
+ //    sbm.state->preFilterCap = preFilterCap1;
+ //    sbm.state->minDisparity = -minDisparity1;
+ //    sbm.state->textureThreshold = textureThreshold1;
+ //    sbm.state->uniquenessRatio = uniquenessRatio1;
+ //    sbm.state->speckleWindowSize = speckleWindowSize1;
+ //    sbm.state->speckleRange = speckleRange1;
+ //    sbm.state->disp12MaxDiff = disp12MaxDiff1;
+ //    sbm(g1, g2, disp);
+
+//}
+// else if (!(strcmp(method, "SGBM")))
+// {
+    StereoSGBM sbm;
+       while((SADWindowSize1)%2==0)
+    {
+    	SADWindowSize1 = SADWindowSize1-1;
+    }
+    sbm.SADWindowSize =SADWindowSize1 ;
+    while(numberOfDisparities1%16!=0)
+    {
+    	numberOfDisparities1=numberOfDisparities1+1;
+    }
+    sbm.numberOfDisparities = numberOfDisparities1;
+    sbm.preFilterCap = preFilterCap1;
+    sbm.minDisparity = -minDisparity1;
+    sbm.uniquenessRatio = uniquenessRatio1;
+    sbm.speckleWindowSize = speckleWindowSize1;
+    sbm.speckleRange = speckleRange1;
+    sbm.disp12MaxDiff = disp12MaxDiff1;
+    sbm.fullDP = false;
+    sbm.P1 = p11;
+    sbm.P2 = p21;
+    sbm(img1111,img2222, disp);
+// }
 
 
 	normalize(disp, disp8, 0, 255, CV_MINMAX, CV_8U);
-	namedWindow("left",WINDOW_NORMAL);
-	namedWindow("right",WINDOW_NORMAL);
-	namedWindow("disp",WINDOW_NORMAL);
-	imshow("left", img1);
-	imshow("right", img2);
-	imshow("disp", disp8);
+	
 
+
+
+	
+	Mat disparity1;
+	medianBlur (disp8,disparity1,5);
+	GaussianBlur(disparity1,disparity,Size (5,5),0,0,BORDER_DEFAULT);
+
+	cout<<"image1_1"<<img1.type()<<endl;
+cv::reprojectImageTo3D(disparity,points,reprojection,false,-1);
+	cout<<"points type:"<<points.type()<<endl;
+	cout<<"point size"<<points.size()<<endl;
+	ofstream point_cloud_file;
+    point_cloud_file.open ("point_cloud.xyz");
+    for(int i = 0; i < points.rows; i++) {
+        for(int j = 0; j < points.cols; j++) {
+            if(points.at<Vec3f>(i,j)[2] < 10) {
+                point_cloud_file << points.at<Vec3f>(i,j)[0] << " " << points.at<Vec3f>(i,j)[1] << " " << points.at<Vec3f>(i,j)[2] 
+                    << " " << static_cast<unsigned>(image_left.at<uchar>(i,j)) << " " << static_cast<unsigned>(image_left.at<uchar>(i,j)) << " " << static_cast<unsigned>(image_left.at<uchar>(i,j)) << endl;
+        	}
+        }
+    }
+    cout<<"image1_2"<<img1.type()<<endl;
+    imshow("left_image",img1);
+    point_cloud_file.close();
+
+
+	//imwrite("disparity_blur.ppm",disp8);
+	imshow("disp8", disparity);
+
+viz::Viz3d myWindow("Coordinate Frame");
+
+    while (!myWindow.wasStopped())
+    {
+        /// Create a cloud widget
+        viz::WCloud cw(points, viz::Color::red());
+
+        /// Display it in a window
+        myWindow.showWidget("CloudWidget1", cw);
+
+        myWindow.spinOnce(1, true);
+    }
+
+
+	//imshow("3d_image",d_image);
+	//ofstream file("3d_image.ply");
+	// file<<d_image<<endl;
+}
+int main()
+{
+	// resize(img01 ,img1,Size(),0.5,0.5);
+	// resize(img02 ,img2,Size(),0.5,0.5);
+	//imwrite("half1.ppm",img1);
+	equalizeHist(img1,img11);//only one chanel is allowed
+	equalizeHist(img2,img22);
+	GaussianBlur(img11,img111,Size (5,5),0,0,BORDER_DEFAULT);
+	GaussianBlur(img22,img222,Size (5,5),0,0,BORDER_DEFAULT);
+	medianBlur (img111,img1111,5);
+	medianBlur (img222,img2222,5);
+	reprojection.at<double>(0,0)=1;
+	reprojection.at<double>(0,1)=0;
+	reprojection.at<double>(0,2)=0;
+	reprojection.at<double>(0,3)=-365.5749244689941;
+	reprojection.at<double>(1,0)=0;
+	reprojection.at<double>(1,1)=1;
+	reprojection.at<double>(1,2)=0;
+	reprojection.at<double>(1,3)=-695.0291175842285;
+	reprojection.at<double>(2,0)=0;
+	reprojection.at<double>(2,1)=0;
+	reprojection.at<double>(2,2)=0;
+	reprojection.at<double>(2,3)=1223.222888161194;
+	reprojection.at<double>(3,0)=0;
+	reprojection.at<double>(3,1)=0;
+	reprojection.at<double>(3,2)=12.4291181632413;
+	reprojection.at<double>(3,3)=-0;
+	cout<<"reprojection:"<<reprojection.size()<<endl;
+	cout<<reprojection<<endl;
+	namedWindow("disp8",WINDOW_NORMAL);
+	namedWindow("disp",WINDOW_NORMAL);
+	//namedWindow("3d_image",WINDOW_NORMAL);
+
+	createTrackbar("SADWindowSize","disp",&SADWindowSize1,27,therosole);
+	createTrackbar("numberOfDisparities","disp",&numberOfDisparities1,500,therosole);
+	createTrackbar("preFilterCap","disp",&preFilterCap1,27,therosole);
+	createTrackbar("minDisparity","disp",&minDisparity1,100,therosole);
+	//createTrackbar("textureThreshold","disp",&textureThreshold1,800,therosole);
+	createTrackbar("uniquenessRatio","disp",&uniquenessRatio1,15,therosole);
+	createTrackbar("speckleWindowSize","disp",&speckleWindowSize1,200,therosole);
+	createTrackbar("speckleRange","disp",&speckleRange1,5,therosole);
+	createTrackbar("disp12MaxDiff","disp",&disp12MaxDiff1,250,therosole);
+	createTrackbar("p1","disp",&p11,800,therosole);
+	createTrackbar("p2","disp",&p21,5000,therosole);
+	therosole(0,0);
+
+	// namedWindow("left",WINDOW_NORMAL);
+	// namedWindow("right",WINDOW_NORMAL);
+	// namedWindow("disp",WINDOW_NORMAL);
+	// imshow("left", img1);
+	// imshow("right", img2);
+	
 	waitKey(0);
 
 	return(0);
 }
+
 /*int main()//14.5.2017
 {	
 	int minDisparity;
@@ -533,8 +897,8 @@ int main()//22-05-2017
 // 	int ther_min_aid=10;
 // 	int min_aid;
 // 	int camera=7650;
-// 	Mat left = imread("left.png",1);
-// 	Mat right = imread("right.png",1);
+// 	Mat left = imread("left.ppm",1);
+// 	Mat right = imread("right.ppm",1);
 // 	int Xr = right.cols+1;
 // 	Mat disparity_map(left.rows,left.cols,CV_8UC1,Scalar(0));
 // 	for(j=0;j<left.rows;j++)
