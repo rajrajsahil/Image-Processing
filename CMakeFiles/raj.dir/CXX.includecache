@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/sahilraj/ip/test.cpp
+bits/stdc++.h
+-
+opencv2/core/core.hpp
+/home/sahilraj/ip/opencv2/core/core.hpp
+opencv2/calib3d/calib3d.hpp
+/home/sahilraj/ip/opencv2/calib3d/calib3d.hpp
+opencv2/highgui/highgui.hpp
+-
+opencv2/imgproc/imgproc.hpp
+-
+fstream
+-
+opencv2/contrib/contrib.hpp
+/home/sahilraj/ip/opencv2/contrib/contrib.hpp
+cctype
+-
+stdio.h
+-
+string.h
+-
+time.h
+-
+cstdlib
+-
+opencv2/viz/viz3d.hpp
+-
+opencv2/viz/vizcore.hpp
+-
+opencv2/viz/types.hpp
+-
+opencv2/viz/widgets.hpp
+-
+

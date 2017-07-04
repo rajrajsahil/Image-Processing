@@ -18,7 +18,11 @@ Preprocessor directives change the text of the source code and the result is a n
 #include <string.h>
 #include <time.h>
 #include <cstdlib>
-#include <opencv2/viz.hpp>
+#include <opencv2/viz/viz3d.hpp>
+#include <opencv2/viz/vizcore.hpp>
+// #include <opencv2/viz/widget_accessor.hpp>
+#include <opencv2/viz/types.hpp>
+#include <opencv2/viz/widgets.hpp>
 using namespace std;
 using namespace cv;
 
@@ -48,7 +52,7 @@ cv::Mat camera_matrix1;
 cv::Mat camera_matrix2;
 cv::Mat distCoeffs1;
 cv::Mat distCoeffs2;
-cv::Mat rectificaton1;
+cv::Mat rectificaton1;c
 cv::Mat rectificaton2;
 cv::Mat projection1;
 cv::Mat projection2;
