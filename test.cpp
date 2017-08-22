@@ -22,29 +22,65 @@ Preprocessor directives change the text of the source code and the result is a n
 #include <opencv2/viz/vizcore.hpp>
 // #include <opencv2/viz/widget_accessor.hpp>
 #include <opencv2/viz/types.hpp>
-#include <opencv2/viz/widgets.hpp>
+#include <opencv2/viz/widgets.hpp> 
+#include <opencv2/video/tracking.hpp>
 using namespace std;
 using namespace cv;
-
-/*int main()
+//// TRACKING HARRISH POINT
+vector<	cv::Point2f	> corners, corners2;
+void user_point(int event, int j, int i, int flags, void* userdata)
 {
-	Mat left = imread("left.ppm",1);
-	Mat right = imread("right.ppm",1);
-	int i;
-	for(i=0;i<left.cols;i++)
+	if(event == EVENT_LBUTTONDOWN)
 	{
-		left.at<Vec3b>(200,i)[2]=255;
-		left.at<Vec3b>(200,i)[1]=0;
-		left.at<Vec3b>(200,i)[0]=0;
-		right.at<Vec3b>(200,i)[2]=255;
-		right.at<Vec3b>(200,i)[1]=0;
-		right.at<Vec3b>(200,i)[0]=0;
+		corners.push_back(Point2f(j,i));
 	}
-	imshow("letf",left);
-	imshow("right",right);
-	waitKey(0);
+}
+int main()
+{	
+	VideoCapture web_cam(0);
+	
+	namedWindow("corners",WINDOW_AUTOSIZE);
+	// namedWindow("select_points",WINDOW_AUTOSIZE);
+	Mat images;
+	Mat gray_images;
+	Mat gray_images2;
+	Mat final;
+	int i;
+		while(web_cam.isOpened())
+		{
+			web_cam >> images;
+			cvtColor(images,gray_images,CV_BGR2GRAY);//CV_RGB2GRAY,CV_BGR2HSV,CV_HSV2BGR
+			if(corners.empty())
+			{
+				goodFeaturesToTrack(gray_images,corners,1,.1,20,noArray(),25,true,0.04);
+			}
+			// imshow("select_points",images);
+			setMouseCallback("corners",user_point,NULL);
+			cout << "corners size:" <<corners.size() <<endl;		
+			cout<<corners<<endl;
+			cornerSubPix(gray_images,corners,Size(8,8),Size(-1,-1),TermCriteria( CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 40, 0.0001 ));
+			cout<<corners<<endl;
+			waitKey(50);
+			web_cam >> images;
+			cvtColor(images,gray_images2,CV_BGR2GRAY);
+			vector<uchar>	features_found;
+			cv::calcOpticalFlowPyrLK(gray_images,gray_images2,corners,corners2,features_found,noArray(),Size(15,15),3,	cv::TermCriteria(cv::TermCriteria::MAX_ITER|cv::TermCriteria::EPS,20,0.3),0,1e-4);
+			for(i=0;i<(int)corners.size();i++)
+			{
+				
+				if(!features_found[i])
+					{
+						continue;
+					}
+				line(images,corners[i],	corners2[i],Scalar(0,255,0),2);
+				//circle( image, points[1][i], 3, Scalar(0,255,0), -1, 8);
+		}
+			imshow("corners",images);
+		//cout<<final.type()<<endl;
+			waitKey(10);
+		}
 	return 0;
-}*/
+}
 
 /*const float calibration_square_dimention =.0245f;//meters//scp test.cpp pi@ip0f pi:~/home/place
 const Size chessboard_dimentions =Size(9,6);
@@ -625,7 +661,7 @@ cout<<"done"<<endl;
 }*/
 /////SGBM
 
-
+/*
 Mat g1, g2;
 Mat points;
 Mat reprojection(4,4,CV_64F);
@@ -740,7 +776,7 @@ cv::reprojectImageTo3D(disparity,points,reprojection,false,-1);
 	//imwrite("disparity_blur.ppm",disp8);
 	imshow("disp8", disparity);
 
-viz::Viz3d myWindow("Coordinate Frame");
+    viz::Viz3d myWindow("Coordinate Frame");
 
     while (!myWindow.wasStopped())
     {
@@ -813,7 +849,7 @@ int main()
 	waitKey(0);
 
 	return(0);
-}
+}*/
 
 /*int main()//14.5.2017
 {	

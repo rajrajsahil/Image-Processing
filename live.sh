@@ -1,7 +1,7 @@
 #!/bin/bash
-if [ -p myfifo ]
+if [ -p mypipe ]
 then
-	rm myfifo
+	rm mypipe
 fi
-mkfifo myfifo
-nc 10.42.0.152 9696 > myfifo
+mkfifo mypipe
+nc 10.42.0.152 9696 > mypipe

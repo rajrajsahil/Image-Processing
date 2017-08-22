@@ -32,11 +32,43 @@ int main()
 	//read(fd,buf,MAX_BUF);
 	Mat frame;
 	namedWindow("windows",WINDOW_AUTOSIZE);
-	VideoCapture raspicam("../myfifo");
+	VideoCapture raspicam("mypipe");
+	cout<<"hii"<<endl;
+	//waitKey(1000);
 	while(raspicam.isOpened())
-	{
+	{	
 		raspicam >> frame;
 		imshow("windows",frame);
+		waitKey(25);
+		
 	}
-	
+	return 0;
 }
+
+/*int main()
+{
+	VideoCapture cap("mypipe"); 
+    if( !cap.isOpened()){
+         cout << "Cannot open the video file" << endl;
+         return -1;
+    }
+
+    double count = cap.get(CV_CAP_PROP_FRAME_COUNT); //get the frame count
+    cap.set(CV_CAP_PROP_POS_FRAMES,count-1); //Set index to last frame
+    namedWindow("MyVideo",CV_WINDOW_AUTOSIZE);
+
+    while(1)
+    {
+        Mat frame;
+        bool success = cap.read(frame); 
+        if (!success){
+          cout << "Cannot read  frame " << endl;
+          break;
+        }
+        imshow("MyVideo", frame);
+        //if(waitKey(0) == 27) break;
+        waitKey(25);
+    }
+    return 0;
+}*/
+
